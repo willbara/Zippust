@@ -3,6 +3,7 @@ use egui_extras::RetainedImage;
 use egui::ColorImage;
 use rand::Rng;
 use std::time::Instant;
+use image::GenericImageView;
 
 pub struct ZippustApp {
     folder_icon: RetainedImage,
@@ -51,68 +52,51 @@ impl App for ZippustApp {
             .show(ctx, |ui| {
                 let painter = ui.painter();
 
-                // Animate dots
                 for (pos, speed, drift) in &mut self.dots {
                     pos.y += *speed * delta_time * 100.0;
                     pos.x += *drift * delta_time * 50.0;
-
                     if pos.y > 540.0 || pos.x < 0.0 || pos.x > 531.0 {
                         pos.y = 0.0;
                         pos.x = rand::thread_rng().gen_range(0.0..531.0);
                     }
-
                     let alpha = ((pos.y / 540.0) * 255.0) as u8;
-                    painter.circle_filled(
-                        *pos,
-                        1.5,
-                        egui::Color32::from_rgba_unmultiplied(255, 255, 255, alpha),
-                    );
+                    painter.circle_filled(*pos, 1.5, egui::Color32::from_rgba_unmultiplied(255, 255, 255, alpha));
                 }
 
                 ui.vertical_centered(|ui| {
-                    // Increased initial spacing to move content down
-                    ui.add_space(120.0);  // Changed from 50.0 to 120.0
-                    
+                    ui.add_space(120.0);
                     self.folder_icon.show_size(ui, egui::vec2(80.0, 80.0));
                     ui.add_space(20.0);
-                    
-                    ui.label(
-                        egui::RichText::new("Drag your documents, photos, or videos here to start encrypting.")
-                            .size(18.0)
-                            .color(egui::Color32::LIGHT_GRAY),
-                    );
+                    ui.label(egui::RichText::new("Drag your documents, photos, or videos here to start encrypting.").size(18.0).color(egui::Color32::LIGHT_GRAY));
                     ui.add_space(15.0);
-                    
-                    if ui
-                        .add(
-                            egui::Button::new(
-                                egui::RichText::new("Browse files")
-                                    .size(18.0)
-                                    .color(egui::Color32::WHITE),
-                            )
-                            .min_size(egui::vec2(150.0, 40.0)),
-                        )
-                        .clicked()
-                    {
+                    if ui.add(egui::Button::new(egui::RichText::new("Browse files").size(18.0).color(egui::Color32::WHITE)).min_size(egui::vec2(150.0, 40.0))).clicked() {
                         println!("Browse clicked");
                     }
                 });
             });
-
         ctx.request_repaint();
     }
 }
 
 pub fn run() {
+    let icon_image = image::open("./assets/icon_1.png").expect("Failed to load icon");
+    let (width, height) = icon_image.dimensions();
+    let rgba = icon_image.into_rgba8().into_raw();
+
     let options = NativeOptions {
-        initial_window_size: Some(egui::vec2(535.0, 540.0)),
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size((535.0, 540.0))
+            .with_resizable(false)
+            .with_icon(eframe::egui::IconData {
+                rgba,
+                width,
+                height,
+            }),
         centered: true,
         ..Default::default()
     };
 
-    eframe::run_native(
-        "Zippust",
-        options,
-        Box::new(|_cc| Box::new(ZippustApp::default())),
-    );
+    eframe::run_native("Zippust", options, Box::new(|_cc| Box::new(ZippustApp::default())));
 }
+
+

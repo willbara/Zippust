@@ -4,7 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-eframe = "0.20"
-egui_extras = "0.20"
+eframe = { version = "0.25.0", features = ["default"] }
+egui = "0.25.0"
+egui_extras = { version = "0.25.0", features = ["image"] }
 image = "0.24"
 rand = "0.8"
+
+[dependencies.winapi]
+version = "0.3.9"
+features = ["winuser", "windef"]
